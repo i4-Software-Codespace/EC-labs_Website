@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solutions - EC Labs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { cyan: { DEFAULT: '#02BFF0', glow: 'rgba(2, 191, 240, 0.6)' }, darkBg: '#03050A' }, fontFamily: { sans:['Inter', 'Noto Sans TC', 'sans-serif'] } } } }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 科技深藍色幾何線條抽象圖背景 (無 3D 粒子) */
+        body { 
+            background-color: #03050A; 
+            background-image: 
+                linear-gradient(to right, rgba(2, 191, 240, 0.04) 1px, transparent 1px), 
+                linear-gradient(to bottom, rgba(2, 191, 240, 0.04) 1px, transparent 1px), 
+                radial-gradient(circle at 50% 30%, rgba(2, 191, 240, 0.15) 0%, rgba(3, 5, 10, 0.85) 60%, rgba(3, 5, 10, 1) 100%), 
+                url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=2070'); 
+            background-size: 50px 50px, 50px 50px, 100% 100%, cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+            color: white; overflow-x: hidden; margin: 0; 
+        }
+
+        .glow-text { text-shadow: 0 0 10px rgba(2, 191, 240, 0.8), 0 0 20px rgba(2, 191, 240, 0.5); }
+        
+        /* 光束玻璃卡片 */
+        .border-beam-card { position: relative; border-radius: 1.5rem; z-index: 1; overflow: hidden; transition: transform 0.4s; }
+        .border-beam-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent 70%, rgba(2, 191, 240, 1) 100%); animation: rotate-beam 3s linear infinite; z-index: -2; opacity: 0.5; transition: opacity 0.3s; }
+        .border-beam-card::after { content: ''; position: absolute; inset: 1px; background: linear-gradient(145deg, rgba(10, 14, 26, 0.7), rgba(3, 5, 10, 0.85)); backdrop-filter: blur(12px); border-radius: inherit; z-index: -1; }
+        .border-beam-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(2, 191, 240, 0.15); }
+        .border-beam-card:hover::before { opacity: 1; animation: rotate-beam 1.5s linear infinite; }
+        @keyframes rotate-beam { 100% { transform: rotate(360deg); } }
+        
+        .magnetic-btn { display: inline-flex; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+        
+        /* Logo */
+        .css-cloud-logo { position: relative; width: 48px; height: 32px; display: flex; align-items: center; justify-content: center; }
+        .cloud-base { position: absolute; bottom: 4px; width: 44px; height: 20px; background: #02BFF0; border-radius: 20px; box-shadow: 0 0 10px rgba(2, 191, 240, 0.6); }
+        .cloud-puff-1 { position: absolute; bottom: 8px; left: 6px; width: 22px; height: 22px; background: #02BFF0; border-radius: 50%; }
+        .cloud-puff-2 { position: absolute; bottom: 8px; right: 4px; width: 28px; height: 28px; background: #02BFF0; border-radius: 50%; }
+        .toggle-switch { position: absolute; bottom: 8px; right: 8px; width: 20px; height: 10px; background: #ffffff; border-radius: 10px; z-index: 10; }
+        .toggle-knob { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; background: #02BFF0; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
+        
+        /* 導航 */
+        .mobile-menu { transform: translateX(-100%); transition: transform 0.3s; }
+        .mobile-menu.active { transform: translateX(0); }
+        .lang-btn { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(2, 191, 240, 0.3); }
+        .lang-btn.active { background: #02BFF0; color: #03050A; box-shadow: 0 0 15px rgba(2, 191, 240, 0.8); }
+        .lang-btn:not(.active) { background: transparent; color: #9CA3AF; }
+
+        /* 新增：黑色半透明玻璃分類選單容器 (Tabs Container) */
+        .tabs-glass-container {
+            background: rgba(3, 5, 10, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(2, 191, 240, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            border-radius: 1rem;
+            padding: 0.5rem;
+            display: inline-flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 4rem;
+        }
+
+        /* 更新：分類按鈕 (Category Tabs) */
+        .category-tab { 
+            padding: 12px 24px; 
+            border-radius: 0.75rem; 
+            border: 1px solid transparent; 
+            transition: all 0.3s; 
+            font-weight: bold; 
+            color: #9CA3AF; 
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .category-tab.active { 
+            background: rgba(2, 191, 240, 0.15); 
+            border-color: rgba(2, 191, 240, 0.4); 
+            color: #02BFF0; 
+            text-shadow: 0 0 10px rgba(2, 191, 240, 0.6); 
+            box-shadow: inset 0 0 15px rgba(2, 191, 240, 0.1);
+        }
+        .category-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .solution-content { display: none; }
+        .solution-content.active { display: block; animation: fadeIn 0.5s forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .feature-item { position: relative; padding-left: 24px; }
+        .feature-item::before { content: '\f00c'; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; left: 0; color: #02BFF0; text-shadow: 0 0 5px #02BFF0; }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="border-b border-cyan/20 bg-[#03050A]/80 backdrop-blur-xl fixed w-full z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 magnetic-btn group">
+                <div class="css-cloud-logo scale-90 group-hover:scale-100 transition-transform"><div class="cloud-puff-1"></div><div class="cloud-puff-2"></div><div class="cloud-base"></div><div class="toggle-switch"><div class="toggle-knob"></div></div></div>
+                <span class="font-black text-2xl md:text-3xl text-white tracking-tighter">EC<span class="text-cyan glow-text">-</span>Labs</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="nav-link text-gray-400 hover:text-cyan px-3 py-2 text-sm font-bold transition-all" data-en="Home" data-tw="首頁">Home</a>
+                <a href="solution.html" class="nav-link text-cyan px-3 py-2 text-sm font-bold border-b-2 border-cyan text-shadow-[0_0_10px_#02BFF0]" data-en="Solutions" data-tw="解決方案">Solutions</a>
+                <a href="about.html" class="nav-link text-gray-400 hover:text-cyan px-3 py-2 text-sm font-bold transition-all" data-en="About" data-tw="關於">About</a>
+                <a href="contact.html" class="nav-link text-gray-400 hover:text-cyan px-3 py-2 text-sm font-bold transition-all" data-en="Contact" data-tw="聯絡">Contact</a>
+                <div class="flex items-center gap-2 ml-4">
+                    <button onclick="setLang('en')" class="lang-btn active" id="lang-en">EN</button>
+                    <button onclick="setLang('tw')" class="lang-btn" id="lang-tw">中</button>
+                </div>
+            </div>
+            <div class="md:hidden flex items-center gap-3">
+                <button onclick="setLang('en')" class="lang-btn active text-xs" id="lang-en-mobile">EN</button>
+                <button onclick="setLang('tw')" class="lang-btn text-xs" id="lang-tw-mobile">中</button>
+                <button id="mobileMenuBtn" class="text-cyan"><i class="fa-solid fa-bars text-2xl"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu fixed inset-0 z-40 bg-darkBg/95 backdrop-blur-2xl border-l border-cyan/20">
+        <div class="flex flex-col h-full pt-24 px-8">
+            <button id="closeMobileMenu" class="absolute top-6 right-6 text-cyan text-3xl"><i class="fa-solid fa-times"></i></button>
+            <nav class="flex flex-col space-y-6">
+                <a href="index.html" class="nav-link text-2xl font-black text-white pb-4" data-en="Home" data-tw="首頁">Home</a>
+                <a href="solution.html" class="nav-link text-2xl font-black text-cyan pb-4" data-en="Solutions" data-tw="解決方案">Solutions</a>
+                <a href="about.html" class="nav-link text-2xl font-black text-white pb-4" data-en="About" data-tw="關於">About</a>
+                <a href="contact.html" class="nav-link text-2xl font-black text-white pb-4" data-en="Contact" data-tw="聯絡">Contact</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="pt-40 pb-12 text-center relative z-10 px-4">
+        <h1 class="text-5xl md:text-7xl font-black text-white mb-6 drop-shadow-2xl"><span class="page-title">Products &</span> <br class="md:hidden"/><span class="text-cyan glow-text">Solutions</span></h1>
+        <p class="page-desc text-gray-300 max-w-3xl mx-auto text-lg md:text-xl font-medium">Comprehensive IoT solutions designed to secure, optimize, and transform your business.</p>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-6 pb-24 relative z-10 text-center md:text-left">
+        
+        <!-- 黑色半透明玻璃分類選單 (Tabs) -->
+        <div class="flex justify-center w-full">
+            <div class="tabs-glass-container">
+                <button class="category-tab active" onclick="switchCategory('iot')">
+                    <i class="fa-solid fa-network-wired"></i> <span class="cat-iot">IoT Platform</span>
+                </button>
+                <button class="category-tab" onclick="switchCategory('energy')">
+                    <i class="fa-solid fa-leaf"></i> <span class="cat-energy">Energy Efficiency</span>
+                </button>
+                <button class="category-tab" onclick="switchCategory('security')">
+                    <i class="fa-solid fa-shield-halved"></i> <span class="cat-security">Smart Security Solution</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- IoT Platform Content -->
+        <div id="iot" class="solution-content active text-left">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-block px-4 py-2 bg-cyan/10 border border-cyan/30 rounded-full text-cyan text-sm font-bold mb-6 shadow-[0_0_15px_rgba(2,191,240,0.2)]">IoT Platform</div>
+                    <h2 class="iot-title text-4xl font-black text-white mb-4">Unified IoT Management Platform</h2>
+                    <p class="iot-desc text-gray-400 mb-8 font-medium leading-relaxed">Connect, control, and monitor all your IoT devices from a single dashboard.</p>
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-server text-cyan text-2xl mb-3"></i><h4 class="iot-feat1-title font-bold text-white mb-1">Edge Computing</h4><p class="iot-feat1-desc text-gray-500 text-sm">Process data locally.</p></div></div>
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-chart-line text-cyan text-2xl mb-3"></i><h4 class="iot-feat2-title font-bold text-white mb-1">Real-time Analytics</h4><p class="iot-feat2-desc text-gray-500 text-sm">AI-powered insights.</p></div></div>
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-lock text-cyan text-2xl mb-3"></i><h4 class="iot-feat3-title font-bold text-white mb-1">Enterprise Security</h4><p class="iot-feat3-desc text-gray-500 text-sm">End-to-end encryption.</p></div></div>
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-plug text-cyan text-2xl mb-3"></i><h4 class="iot-feat4-title font-bold text-white mb-1">Multi-Protocol</h4><p class="iot-feat4-desc text-gray-500 text-sm">Zigbee, BLE, WiFi.</p></div></div>
+                    </div>
+                    <a href="contact.html" class="magnetic-btn inline-flex bg-cyan text-darkBg font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(2,191,240,0.5)] iot-cta">Request Demo</a>
+                </div>
+                <div class="border-beam-card p-12 text-center">
+                    <div class="relative z-10">
+                        <i class="fa-solid fa-network-wired text-7xl text-cyan mb-10 drop-shadow-[0_0_15px_#02BFF0]"></i>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="w-16 h-16 bg-[#03050A]/80 border border-cyan/20 rounded-xl flex items-center justify-center mx-auto hover:border-cyan hover:shadow-[0_0_15px_rgba(2,191,240,0.5)] transition"><i class="fa-solid fa-wifi text-cyan text-2xl"></i></div>
+                            <div class="w-16 h-16 bg-[#03050A]/80 border border-cyan/20 rounded-xl flex items-center justify-center mx-auto hover:border-cyan hover:shadow-[0_0_15px_rgba(2,191,240,0.5)] transition"><i class="fa-brands fa-bluetooth-b text-cyan text-2xl"></i></div>
+                            <div class="w-16 h-16 bg-[#03050A]/80 border border-cyan/20 rounded-xl flex items-center justify-center mx-auto hover:border-cyan hover:shadow-[0_0_15px_rgba(2,191,240,0.5)] transition"><i class="fa-solid fa-satellite-dish text-cyan text-2xl"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Energy Content -->
+        <div id="energy" class="solution-content text-left">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-block px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full text-green-400 text-sm font-bold mb-6 shadow-[0_0_15px_rgba(34,197,94,0.2)]">Energy Efficiency</div>
+                    <h2 class="energy-title text-4xl font-black text-white mb-4">Smart Energy Management</h2>
+                    <p class="energy-desc text-gray-400 mb-8 font-medium leading-relaxed">Reduce energy consumption with intelligent monitoring.</p>
+                    <div class="space-y-4 mb-8">
+                        <div class="feature-item text-gray-300 font-medium energy-feat1">Real-time power monitoring</div>
+                        <div class="feature-item text-gray-300 font-medium energy-feat2">Automated lighting optimization</div>
+                        <div class="feature-item text-gray-300 font-medium energy-feat3">Solar integration</div>
+                        <div class="feature-item text-gray-300 font-medium energy-feat4">Carbon footprint tracking</div>
+                        <div class="feature-item text-gray-300 font-medium energy-feat5">Demand response</div>
+                    </div>
+                    <a href="contact.html" class="magnetic-btn inline-flex bg-cyan text-darkBg font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(2,191,240,0.5)] energy-cta">Get Energy Audit</a>
+                </div>
+                <div class="border-beam-card p-10 text-center">
+                    <div class="relative z-10">
+                        <i class="fa-solid fa-bolt text-7xl text-cyan mb-10 drop-shadow-[0_0_15px_#02BFF0]"></i>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="bg-[#03050A]/80 border border-cyan/20 p-6 rounded-xl"><div class="text-4xl font-black text-white mb-2">30%</div><div class="text-cyan text-sm font-bold energy-stat1">Energy Savings</div></div>
+                            <div class="bg-[#03050A]/80 border border-cyan/20 p-6 rounded-xl"><div class="text-4xl font-black text-white mb-2">24/7</div><div class="text-cyan text-sm font-bold energy-stat2">Monitoring</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Security Content -->
+        <div id="security" class="solution-content text-left">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-block px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-full text-red-400 text-sm font-bold mb-6 shadow-[0_0_15px_rgba(239,68,68,0.2)]">Smart Security</div>
+                    <h2 class="security-title text-4xl font-black text-white mb-4">Advanced Security Solutions</h2>
+                    <p class="security-desc text-gray-400 mb-8 font-medium leading-relaxed">AI-powered detection and real-time alerts.</p>
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-video text-cyan text-2xl mb-3"></i><h4 class="security-feat1-title font-bold text-white">AI Video Analytics</h4></div></div>
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-bell text-cyan text-2xl mb-3"></i><h4 class="security-feat2-title font-bold text-white">Instant Alerts</h4></div></div>
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-fingerprint text-cyan text-2xl mb-3"></i><h4 class="security-feat3-title font-bold text-white">Access Control</h4></div></div>
+                        <div class="border-beam-card p-5"><div class="relative z-10"><i class="fa-solid fa-building-shield text-cyan text-2xl mb-3"></i><h4 class="security-feat4-title font-bold text-white">Perimeter Security</h4></div></div>
+                    </div>
+                    <a href="contact.html" class="magnetic-btn inline-flex bg-cyan text-darkBg font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(2,191,240,0.5)] security-cta">Get Assessment</a>
+                </div>
+                <div class="border-beam-card p-10 text-center">
+                    <div class="relative z-10">
+                        <i class="fa-solid fa-shield-halved text-7xl text-cyan mb-10 drop-shadow-[0_0_15px_#02BFF0]"></i>
+                        <div class="space-y-3">
+                            <div class="flex justify-between bg-[#03050A]/80 border border-cyan/20 p-4 rounded-xl items-center"><span class="text-white font-bold sec-feat1">Video Surveillance</span><i class="fa-solid fa-check text-cyan"></i></div>
+                            <div class="flex justify-between bg-[#03050A]/80 border border-cyan/20 p-4 rounded-xl items-center"><span class="text-white font-bold sec-feat2">Access Control</span><i class="fa-solid fa-check text-cyan"></i></div>
+                            <div class="flex justify-between bg-[#03050A]/80 border border-cyan/20 p-4 rounded-xl items-center"><span class="text-white font-bold sec-feat3">Intrusion Detection</span><i class="fa-solid fa-check text-cyan"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="border-beam-card p-16 text-center mt-24">
+            <div class="relative z-10">
+                <h2 class="cta-title text-3xl md:text-4xl font-black text-white mb-4">Ready to Transform Your Business?</h2>
+                <p class="cta-desc text-gray-400 mb-8 text-lg font-medium">Our experts can help design a customized solution.</p>
+                <a href="contact.html" class="magnetic-btn inline-block bg-cyan text-darkBg font-black py-4 px-10 rounded-full shadow-[0_0_30px_rgba(2,191,240,0.6)] hover:shadow-[0_0_50px_rgba(2,191,240,1)] hover:bg-white transition-colors">Contact Our Experts</a>
+            </div>
+        </section>
+    </div>
+
+    <footer class="border-t border-cyan/10 bg-[#03050A]/95 mt-auto py-8 text-center relative z-10"><p class="text-gray-600 text-xs tracking-widest font-bold">© 2026 EC-LABS. ALL RIGHTS RESERVED.</p></footer>
+
+    <script>
+        // 磁吸按鈕效果
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => { const rect = btn.getBoundingClientRect(); btn.style.transform = `translate(${(e.clientX - rect.left - rect.width/2)*0.3}px, ${(e.clientY - rect.top - rect.height/2)*0.3}px) scale(1.05)`; });
+            btn.addEventListener('mouseleave', () => btn.style.transform = `translate(0px, 0px) scale(1)`);
+        });
+
+        /* Translation Logic */
+        const translations = {
+            en: { 
+                pageTitle: 'Products &', catIoT: 'IoT Platform', catEnergy: 'Energy Efficiency', 
+                catSecurity: 'Smart Security Solution', /* 更新為 Solution */
+                iotTitle: 'Unified IoT Management Platform', iotDesc: 'Connect, control, and monitor all your IoT devices from a single dashboard.', iotFeat1Title: 'Edge Computing', iotFeat1Desc: 'Process data locally.', iotFeat2Title: 'Real-time Analytics', iotFeat2Desc: 'AI-powered insights.', iotFeat3Title: 'Enterprise Security', iotFeat3Desc: 'End-to-end encryption.', iotFeat4Title: 'Multi-Protocol', iotFeat4Desc: 'Zigbee, BLE, WiFi.', iotCta: 'Request Demo', 
+                energyTitle: 'Smart Energy Management', energyDesc: 'Reduce energy consumption with intelligent monitoring.', energyFeat1: 'Real-time power monitoring', energyFeat2: 'Automated lighting optimization', energyFeat3: 'Solar integration', energyFeat4: 'Carbon footprint tracking', energyFeat5: 'Demand response', energyCta: 'Get Energy Audit', energyStat1: 'Energy Savings', energyStat2: 'Monitoring', energyStat3: 'Devices', energyStat4: 'Response', 
+                securityTitle: 'Advanced Security Solutions', securityDesc: 'AI-powered detection and real-time alerts.', securityFeat1Title: 'AI Video Analytics', securityFeat2Title: 'Instant Alerts', securityFeat3Title: 'Access Control', securityFeat4Title: 'Perimeter Security', securityCta: 'Get Assessment', secFeat1: 'Video Surveillance', secFeat2: 'Access Control', secFeat3: 'Intrusion Detection', secFeat4: 'Fire & Gas Leak', 
+                ctaTitle: 'Ready to Transform Your Business?', ctaDesc: 'Our experts can help design a customized solution.' 
+            },
+            tw: { 
+                pageTitle: '產品及', catIoT: '物聯網平台', catEnergy: '能源效益', 
+                catSecurity: '智能安防解決方案', /* 對應更新為中文版 */
+                iotTitle: '統一物聯網管理平台', iotDesc: '透過單一儀表板連接、控制和監控您所有物聯網設備。', iotFeat1Title: '邊緣運算', iotFeat1Desc: '本地處理數據。', iotFeat2Title: '實時分析', iotFeat2Desc: 'AI驅動的洞察。', iotFeat3Title: '企業保安', iotFeat3Desc: '端對端加密。', iotFeat4Title: '多協議', iotFeat4Desc: '支援 Zigbee, BLE, WiFi。', iotCta: '申請示範', 
+                energyTitle: '智能能源管理', energyDesc: '透過智能監控降低能源消耗。', energyFeat1: '實時電力監控', energyFeat2: '自動照明優化', energyFeat3: '太陽能整合', energyFeat4: '碳足跡追蹤', energyFeat5: '需求響應', energyCta: '獲取能源審計', energyStat1: '能源節省', energyStat2: '持續監控', energyStat3: '支援設備', energyStat4: '極速響應', 
+                securityTitle: '先進保安解決方案', securityDesc: 'AI驅動的偵測和實時警報。', securityFeat1Title: 'AI視頻分析', securityFeat2Title: '即時警報', securityFeat3Title: '訪問控制', securityFeat4Title: '周界保安', securityCta: '獲取評估', secFeat1: '視頻監控', secFeat2: '訪問控制', secFeat3: '入侵偵測', secFeat4: '火警及氣體洩漏', 
+                ctaTitle: '準備好轉變您的業務了嗎？', ctaDesc: '我們的專家可以幫助設計定制解決方案。' 
+            }
+        };
+        
+        let currentLang = localStorage.getItem('lang') || 'en';
+        
+        function setLang(lang) { currentLang = lang; localStorage.setItem('lang', lang); updateContent(); }
+        
+        function updateContent() {
+            const t = translations[currentLang];
+            document.querySelectorAll('.page-title').forEach(el => el.textContent = t.pageTitle);
+            document.querySelectorAll('.cat-iot').forEach(el => el.textContent = t.catIoT);
+            document.querySelectorAll('.cat-energy').forEach(el => el.textContent = t.catEnergy);
+            document.querySelectorAll('.cat-security').forEach(el => el.textContent = t.catSecurity);
+            document.querySelectorAll('.iot-title').forEach(el => el.textContent = t.iotTitle);
+            document.querySelectorAll('.iot-desc').forEach(el => el.textContent = t.iotDesc);
+            document.querySelectorAll('.iot-feat1-title').forEach(el => el.textContent = t.iotFeat1Title);
+            document.querySelectorAll('.iot-feat1-desc').forEach(el => el.textContent = t.iotFeat1Desc);
+            document.querySelectorAll('.iot-feat2-title').forEach(el => el.textContent = t.iotFeat2Title);
+            document.querySelectorAll('.iot-feat2-desc').forEach(el => el.textContent = t.iotFeat2Desc);
+            document.querySelectorAll('.iot-feat3-title').forEach(el => el.textContent = t.iotFeat3Title);
+            document.querySelectorAll('.iot-feat3-desc').forEach(el => el.textContent = t.iotFeat3Desc);
+            document.querySelectorAll('.iot-feat4-title').forEach(el => el.textContent = t.iotFeat4Title);
+            document.querySelectorAll('.iot-feat4-desc').forEach(el => el.textContent = t.iotFeat4Desc);
+            document.querySelectorAll('.iot-cta').forEach(el => el.textContent = t.iotCta);
+            document.querySelectorAll('.energy-title').forEach(el => el.textContent = t.energyTitle);
+            document.querySelectorAll('.energy-desc').forEach(el => el.textContent = t.energyDesc);
+            document.querySelectorAll('.energy-feat1').forEach(el => el.textContent = t.energyFeat1);
+            document.querySelectorAll('.energy-feat2').forEach(el => el.textContent = t.energyFeat2);
+            document.querySelectorAll('.energy-feat3').forEach(el => el.textContent = t.energyFeat3);
+            document.querySelectorAll('.energy-feat4').forEach(el => el.textContent = t.energyFeat4);
+            document.querySelectorAll('.energy-feat5').forEach(el => el.textContent = t.energyFeat5);
+            document.querySelectorAll('.energy-cta').forEach(el => el.textContent = t.energyCta);
+            document.querySelectorAll('.energy-stat1').forEach(el => el.textContent = t.energyStat1);
+            document.querySelectorAll('.energy-stat2').forEach(el => el.textContent = t.energyStat2);
+            document.querySelectorAll('.security-title').forEach(el => el.textContent = t.securityTitle);
+            document.querySelectorAll('.security-desc').forEach(el => el.textContent = t.securityDesc);
+            document.querySelectorAll('.security-feat1-title').forEach(el => el.textContent = t.securityFeat1Title);
+            document.querySelectorAll('.security-feat2-title').forEach(el => el.textContent = t.securityFeat2Title);
+            document.querySelectorAll('.security-feat3-title').forEach(el => el.textContent = t.securityFeat3Title);
+            document.querySelectorAll('.security-feat4-title').forEach(el => el.textContent = t.securityFeat4Title);
+            document.querySelectorAll('.security-cta').forEach(el => el.textContent = t.securityCta);
+            document.querySelectorAll('.sec-feat1').forEach(el => el.textContent = t.secFeat1);
+            document.querySelectorAll('.sec-feat2').forEach(el => el.textContent = t.secFeat2);
+            document.querySelectorAll('.sec-feat3').forEach(el => el.textContent = t.secFeat3);
+            document.querySelectorAll('.cta-title').forEach(el => el.textContent = t.ctaTitle);
+            document.querySelectorAll('.cta-desc').forEach(el => el.textContent = t.ctaDesc);
+            document.querySelectorAll('.nav-link').forEach(el => el.textContent = currentLang === 'tw' ? el.dataset.tw : el.dataset.en);
+            document.querySelectorAll('#lang-en, #lang-en-mobile').forEach(el => el.classList.toggle('active', currentLang === 'en'));
+            document.querySelectorAll('#lang-tw, #lang-tw-mobile').forEach(el => el.classList.toggle('active', currentLang === 'tw'));
+        }
+        
+        function switchCategory(cat) { 
+            document.querySelectorAll('.solution-content').forEach(el => el.classList.remove('active')); 
+            document.querySelectorAll('.category-tab').forEach(el => el.classList.remove('active')); 
+            document.getElementById(cat).classList.add('active'); 
+            event.currentTarget.classList.add('active'); 
+        }
+
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('active'));
+        document.getElementById('closeMobileMenu')?.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('active'));
+        
+        updateContent();
+    </script>
+</body>
+</html>

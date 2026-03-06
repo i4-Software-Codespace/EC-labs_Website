@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EC Labs - Tech Impact IoT</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyan: { DEFAULT: '#02BFF0', glow: 'rgba(2, 191, 240, 0.6)' },
+                        darkBg: '#03050A', /* 極度深邃的科技黑 */
+                        card: '#0A0E1A'
+                    },
+                    fontFamily: { sans:['Inter', 'Noto Sans TC', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Three.js (3D 粒子系統核心) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        /* 基礎設定與太空地球疊加背景 (融合了網格、極深遮罩與真實地圖) */
+        body { 
+            background-color: #03050A; 
+            background-image: 
+                /* 1. 科技網格線 (直) */
+                linear-gradient(to right, rgba(2, 191, 240, 0.04) 1px, transparent 1px),
+                /* 2. 科技網格線 (橫) */
+                linear-gradient(to bottom, rgba(2, 191, 240, 0.04) 1px, transparent 1px),
+                /* 3. 極深色漸層遮罩 (中央透出微光，邊緣純黑，確保文字與 3D 粒子高對比) */
+                radial-gradient(circle at 50% 30%, rgba(2, 191, 240, 0.15) 0%, rgba(3, 5, 10, 0.85) 60%, rgba(3, 5, 10, 1) 100%),
+                /* 4. 太空地球背景圖片 */
+                url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2072');
+            background-size: 50px 50px, 50px 50px, 100% 100%, cover;
+            background-position: center, center, center, center;
+            background-attachment: fixed, fixed, fixed, fixed; /* 產生電影級視差滾動感 */
+            color: white; 
+            overflow-x: hidden; 
+            margin: 0;
+        }
+
+        /* Three.js 畫布容器 (懸浮在背景圖片之上) */
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none; /* 讓點擊事件穿透 */
+            opacity: 0.8;
+            mix-blend-mode: screen; /* 螢幕混和模式，讓粒子光點更亮 */
+        }
+
+        /* 霓虹發光文字 (極高對比) */
+        .glow-text { 
+            text-shadow: 0 0 10px rgba(2, 191, 240, 0.8), 0 0 20px rgba(2, 191, 240, 0.5), 0 0 40px rgba(2, 191, 240, 0.3); 
+        }
+
+        /* 1px 光束旋轉邊框 + 玻璃擬物卡片 (Border Beam + Glassmorphism) */
+        .border-beam-card {
+            position: relative;
+            border-radius: 1.5rem;
+            z-index: 1;
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .border-beam-card::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(from 0deg, transparent 70%, rgba(2, 191, 240, 1) 100%);
+            animation: rotate-beam 3s linear infinite;
+            z-index: -2;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .border-beam-card::after {
+            content: '';
+            position: absolute;
+            inset: 1px; /* 1px 的雷射邊框厚度 */
+            /* 調整為半透明磨砂質感，讓底部的地球背景可以透出來 */
+            background: linear-gradient(145deg, rgba(10, 14, 26, 0.7), rgba(3, 5, 10, 0.85));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: inherit;
+            z-index: -1;
+        }
+        .border-beam-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(2, 191, 240, 0.15);
+        }
+        .border-beam-card:hover::before {
+            opacity: 1; /* Hover 時光束變亮 */
+            animation: rotate-beam 1.5s linear infinite; /* Hover 時光束加速 */
+        }
+        @keyframes rotate-beam {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 磁吸按鈕動畫過渡 */
+        .magnetic-btn {
+            display: inline-flex;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+            will-change: transform;
+        }
+
+        /* 純 CSS 雲朵 Logo */
+        .css-cloud-logo { position: relative; width: 48px; height: 32px; display: flex; align-items: center; justify-content: center; }
+        .cloud-base { position: absolute; bottom: 4px; width: 44px; height: 20px; background: #02BFF0; border-radius: 20px; box-shadow: 0 0 10px rgba(2, 191, 240, 0.6); }
+        .cloud-puff-1 { position: absolute; bottom: 8px; left: 6px; width: 22px; height: 22px; background: #02BFF0; border-radius: 50%; box-shadow: 0 0 10px rgba(2, 191, 240, 0.6); }
+        .cloud-puff-2 { position: absolute; bottom: 8px; right: 4px; width: 28px; height: 28px; background: #02BFF0; border-radius: 50%; box-shadow: 0 0 10px rgba(2, 191, 240, 0.6); }
+        .toggle-switch { position: absolute; bottom: 8px; right: 8px; width: 20px; height: 10px; background: #ffffff; border-radius: 10px; z-index: 10; }
+        .toggle-knob { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; background: #02BFF0; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
+
+        /* 手機選單與語言按鈕 */
+        .mobile-menu { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        .mobile-menu.active { transform: translateX(0); }
+        .lang-btn { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(2, 191, 240, 0.3); }
+        .lang-btn.active { background: #02BFF0; color: #03050A; box-shadow: 0 0 15px rgba(2, 191, 240, 0.8); }
+        .lang-btn:not(.active) { background: transparent; color: #9CA3AF; }
+        .lang-btn:not(.active):hover { border-color: #02BFF0; color: #02BFF0; text-shadow: 0 0 5px rgba(2, 191, 240, 0.8); }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Three.js 畫布背景 (3D 粒子星空) -->
+    <canvas id="webgl-container"></canvas>
+
+    <!-- Navigation -->
+    <nav class="border-b border-cyan/20 bg-[#03050A]/70 backdrop-blur-xl fixed w-full z-50 transition-all duration-300 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- 品牌 Logo 區 -->
+                <a href="index.html" class="flex items-center gap-3 cursor-pointer group magnetic-btn">
+                    <div class="css-cloud-logo scale-90 group-hover:scale-100 transition-transform duration-300">
+                        <div class="cloud-puff-1"></div>
+                        <div class="cloud-puff-2"></div>
+                        <div class="cloud-base"></div>
+                        <div class="toggle-switch"><div class="toggle-knob"></div></div>
+                    </div>
+                    <span class="font-black text-2xl md:text-3xl text-white tracking-tighter">EC<span class="text-cyan glow-text">-</span>Labs</span>
+                </a>
+
+                <!-- 桌面版選單與語系切換 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <div class="flex items-center space-x-8">
+                        <a href="index.html" class="nav-link text-cyan px-3 py-2 text-sm font-bold border-b-2 border-cyan text-shadow-[0_0_10px_#02BFF0]" data-en="Home" data-tw="首頁">Home</a>
+                        <a href="solution.html" class="nav-link text-gray-400 hover:text-cyan hover:drop-shadow-[0_0_8px_rgba(2,191,240,0.8)] px-3 py-2 text-sm font-bold transition-all" data-en="Solutions" data-tw="解決方案">Solutions</a>
+                        <a href="about.html" class="nav-link text-gray-400 hover:text-cyan hover:drop-shadow-[0_0_8px_rgba(2,191,240,0.8)] px-3 py-2 text-sm font-bold transition-all" data-en="About" data-tw="關於我們">About</a>
+                        <a href="contact.html" class="nav-link text-gray-400 hover:text-cyan hover:drop-shadow-[0_0_8px_rgba(2,191,240,0.8)] px-3 py-2 text-sm font-bold transition-all" data-en="Contact" data-tw="聯絡我們">Contact</a>
+                    </div>
+                    <!-- Language Switcher -->
+                    <div class="flex items-center gap-2 ml-4">
+                        <button onclick="setLang('en')" class="lang-btn active" id="lang-en">EN</button>
+                        <button onclick="setLang('tw')" class="lang-btn" id="lang-tw">中</button>
+                    </div>
+                </div>
+
+                <!-- 手機版選單按鈕 -->
+                <div class="md:hidden flex items-center gap-3">
+                    <button onclick="setLang('en')" class="lang-btn active text-xs" id="lang-en-mobile">EN</button>
+                    <button onclick="setLang('tw')" class="lang-btn text-xs" id="lang-tw-mobile">中</button>
+                    <button id="mobileMenuBtn" class="text-cyan hover:text-white"><i class="fa-solid fa-bars text-2xl drop-shadow-[0_0_5px_#02BFF0]"></i></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div id="mobileMenu" class="mobile-menu fixed inset-0 z-40 bg-darkBg/95 backdrop-blur-2xl border-l border-cyan/20">
+        <div class="flex flex-col h-full pt-24 px-8">
+            <button id="closeMobileMenu" class="absolute top-6 right-6 text-cyan hover:text-white hover:drop-shadow-[0_0_10px_#02BFF0]"><i class="fa-solid fa-times text-3xl"></i></button>
+            <nav class="flex flex-col space-y-6">
+                <a href="index.html" class="nav-link text-2xl font-black text-cyan border-b border-gray-800 pb-4" data-en="Home" data-tw="首頁">Home</a>
+                <a href="solution.html" class="nav-link text-2xl font-black text-white border-b border-gray-800 pb-4 hover:text-cyan transition" data-en="Solutions" data-tw="解決方案">Solutions</a>
+                <a href="about.html" class="nav-link text-2xl font-black text-white border-b border-gray-800 pb-4 hover:text-cyan transition" data-en="About" data-tw="關於我們">About</a>
+                <a href="contact.html" class="nav-link text-2xl font-black text-white border-b border-gray-800 pb-4 hover:text-cyan transition" data-en="Contact" data-tw="聯絡我們">Contact</a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <main class="flex-grow flex items-center justify-center pt-40 pb-24 relative z-10">
+        <div class="text-center px-4 max-w-5xl mx-auto mt-4 md:mt-10 relative">
+            <div class="hero-badge inline-block mb-8 px-6 py-2 rounded-full border border-cyan/60 bg-cyan/10 text-cyan text-sm md:text-base font-bold tracking-[0.2em] shadow-[0_0_20px_rgba(2,191,240,0.3)] backdrop-blur-md">
+                NEXT-GENERATION IOT SECURITY
+            </div>
+            <h1 class="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter leading-tight drop-shadow-2xl">
+                <span class="hero-title-main1">Leading</span> <br class="md:hidden" />
+                <span class="text-cyan glow-text hero-title-keyword">IoT</span> <br class="md:hidden" />
+                <span class="hero-title-main2">Innovation</span>
+            </h1>
+            <p class="hero-subtitle text-lg md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto font-medium leading-relaxed drop-shadow-lg">
+                Empowering the future with Smart Anti-Theft systems and Intelligent Lighting Control solutions.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-6 items-center">
+                <button class="magnetic-btn hero-cta1 bg-cyan text-darkBg font-black text-lg py-5 px-12 rounded-full shadow-[0_0_30px_rgba(2,191,240,0.7)] hover:shadow-[0_0_60px_rgba(2,191,240,1)] hover:bg-white transition-colors flex items-center justify-center gap-3 relative overflow-hidden group">
+                    <span class="relative z-10 hero-cta1-text">Explore Solutions</span> 
+                    <i class="fa-solid fa-arrow-right relative z-10 transform group-hover:translate-x-2 transition-transform"></i>
+                </button>
+                <button class="magnetic-btn hero-cta2 border-2 border-cyan/50 text-cyan bg-darkBg/40 backdrop-blur-md hover:bg-cyan hover:text-darkBg hover:shadow-[0_0_30px_rgba(2,191,240,0.5)] font-bold text-lg py-5 px-12 rounded-full transition-all">
+                    Contact Us
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Core Technologies (1px Border Beam + Glass Cards) -->
+    <section class="py-24 relative z-10">
+        <!-- 頂部過渡漸層，讓地球背景過渡更順暢 -->
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-[#03050A]/60 to-[#03050A]/90 -z-10"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20 relative">
+                <h2 class="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight"><span class="hero-section-title">Our Core</span> <span class="text-cyan glow-text hero-section-highlight">Technologies</span></h2>
+                <div class="w-24 h-1.5 bg-cyan mx-auto rounded-full shadow-[0_0_15px_#02BFF0]"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Card 1 -->
+                <div class="border-beam-card p-10 group">
+                    <div class="w-16 h-16 bg-cyan/10 rounded-2xl flex items-center justify-center text-cyan text-3xl mb-8 border border-cyan/30 shadow-[0_0_20px_rgba(2,191,240,0.2)] group-hover:bg-cyan group-hover:text-darkBg group-hover:shadow-[0_0_30px_rgba(2,191,240,0.6)] transition-all duration-300 transform group-hover:rotate-6 relative z-10">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4 card1-title relative z-10">IoT Platforms</h3>
+                    <p class="text-gray-400 leading-relaxed mb-8 text-sm font-medium card1-desc relative z-10">
+                        Comprehensive smart sensor ecosystem for real-time facility monitoring and environmental control.
+                    </p>
+                    <ul class="text-gray-300 text-sm font-medium space-y-4 mb-10 relative z-10">
+                        <li class="flex items-center"><i class="fa-solid fa-droplet text-cyan w-6 drop-shadow-[0_0_5px_#02BFF0]"></i> <span class="card1-feat1">Water Leak Detection</span></li>
+                        <li class="flex items-center"><i class="fa-solid fa-bolt text-cyan w-6 drop-shadow-[0_0_5px_#02BFF0]"></i> <span class="card1-feat2">Smart Energy Metering</span></li>
+                        <li class="flex items-center"><i class="fa-solid fa-temperature-half text-cyan w-6 drop-shadow-[0_0_5px_#02BFF0]"></i> <span class="card1-feat3">Temp & Humidity</span></li>
+                    </ul>
+                    <a href="solution.html" class="text-cyan font-bold tracking-wider group-hover:text-white transition-colors flex items-center gap-2 mt-auto relative z-10">
+                        <span class="learn-more">Learn More</span> <i class="fa-solid fa-arrow-right text-sm transform group-hover:translate-x-2 transition-transform"></i>
+                    </a>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="border-beam-card p-10 group">
+                    <div class="w-16 h-16 bg-cyan/10 rounded-2xl flex items-center justify-center text-cyan text-3xl mb-8 border border-cyan/30 shadow-[0_0_20px_rgba(2,191,240,0.2)] group-hover:bg-cyan group-hover:text-darkBg group-hover:shadow-[0_0_30px_rgba(2,191,240,0.6)] transition-all duration-300 transform group-hover:rotate-6 relative z-10">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4 card2-title relative z-10">Smart Anti-Theft</h3>
+                    <p class="text-gray-400 leading-relaxed mb-8 text-sm font-medium card2-desc relative z-10">
+                        Advanced intrusion detection systems equipped with real-time alerts, AI behavioral analysis, and proactive monitoring to protect your premises.
+                    </p>
+                    <a href="solution.html" class="text-cyan font-bold tracking-wider group-hover:text-white transition-colors flex items-center gap-2 mt-auto absolute bottom-10 z-10">
+                        <span class="learn-more">Learn More</span> <i class="fa-solid fa-arrow-right text-sm transform group-hover:translate-x-2 transition-transform"></i>
+                    </a>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="border-beam-card p-10 group">
+                    <div class="w-16 h-16 bg-cyan/10 rounded-2xl flex items-center justify-center text-cyan text-3xl mb-8 border border-cyan/30 shadow-[0_0_20px_rgba(2,191,240,0.2)] group-hover:bg-cyan group-hover:text-darkBg group-hover:shadow-[0_0_30px_rgba(2,191,240,0.6)] transition-all duration-300 transform group-hover:rotate-6 relative z-10">
+                        <i class="fa-regular fa-lightbulb"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4 card3-title relative z-10">Intelligent Lighting</h3>
+                    <p class="text-gray-400 leading-relaxed mb-8 text-sm font-medium card3-desc relative z-10">
+                        Automated, energy-efficient lighting controls that intuitively adapt to environment, occupancy, and schedules, reducing power consumption effortlessly.
+                    </p>
+                    <a href="solution.html" class="text-cyan font-bold tracking-wider group-hover:text-white transition-colors flex items-center gap-2 mt-auto absolute bottom-10 z-10">
+                        <span class="learn-more">Learn More</span> <i class="fa-solid fa-arrow-right text-sm transform group-hover:translate-x-2 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-cyan/20 bg-[#03050A]/95 backdrop-blur-xl relative z-10 pt-16 pb-8 mt-auto overflow-hidden">
+        <div class="absolute bottom-0 left-[50%] -translate-x-1/2 w-1/2 h-1 bg-cyan shadow-[0_0_50px_20px_rgba(2,191,240,0.15)] rounded-t-full"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="css-cloud-logo scale-75 origin-left">
+                            <div class="cloud-puff-1"></div><div class="cloud-puff-2"></div><div class="cloud-base"></div>
+                            <div class="toggle-switch"><div class="toggle-knob"></div></div>
+                        </div>
+                        <span class="font-black text-2xl text-white tracking-tighter">EC<span class="text-cyan">-</span>Labs</span>
+                    </div>
+                    <p class="text-gray-400 text-sm max-w-md mb-8 leading-relaxed font-medium footer-desc">
+                        Engineering the future of connectivity. Cyber-secure IoT platforms, advanced anti-theft systems, and intelligent environments for the modern enterprise.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="magnetic-btn w-10 h-10 rounded-full border border-cyan/30 flex items-center justify-center text-cyan hover:bg-cyan hover:text-darkBg transition-colors shadow-[0_0_10px_rgba(2,191,240,0)] hover:shadow-[0_0_15px_rgba(2,191,240,0.5)]"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="#" class="magnetic-btn w-10 h-10 rounded-full border border-cyan/30 flex items-center justify-center text-cyan hover:bg-cyan hover:text-darkBg transition-colors shadow-[0_0_10px_rgba(2,191,240,0)] hover:shadow-[0_0_15px_rgba(2,191,240,0.5)]"><i class="fa-brands fa-x-twitter"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-6 tracking-widest text-sm uppercase footer-solutions-title">Solutions</h4>
+                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
+                        <li><a href="solution.html" class="hover:text-cyan hover:drop-shadow-[0_0_5px_#02BFF0] transition-all footer-sol1">IoT Platforms</a></li>
+                        <li><a href="solution.html" class="hover:text-cyan hover:drop-shadow-[0_0_5px_#02BFF0] transition-all footer-sol2">Anti-Theft Security</a></li>
+                        <li><a href="solution.html" class="hover:text-cyan hover:drop-shadow-[0_0_5px_#02BFF0] transition-all footer-sol3">Lighting Control</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold mb-6 tracking-widest text-sm uppercase footer-company-title">Company</h4>
+                    <ul class="space-y-3 text-sm text-gray-400 font-medium">
+                        <li><a href="about.html" class="hover:text-cyan hover:drop-shadow-[0_0_5px_#02BFF0] transition-all nav-about-link">About Us</a></li>
+                        <li><a href="solution.html" class="hover:text-cyan hover:drop-shadow-[0_0_5px_#02BFF0] transition-all nav-sol-link">Solutions</a></li>
+                        <li><a href="contact.html" class="hover:text-cyan hover:drop-shadow-[0_0_5px_#02BFF0] transition-all nav-contact-link">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-cyan/10 pt-8 text-center flex flex-col items-center">
+                <p class="text-gray-500 text-xs tracking-widest font-bold">© 2026 EC-LABS. ALL RIGHTS RESERVED.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 腳本整合區：Three.js + 磁吸按鈕 + 中英切換 -->
+    <script>
+        /* =========================================
+           1. Three.js 3D 粒子星空引擎 (滑鼠互動)
+           ========================================= */
+        const initThreeJS = () => {
+            const canvas = document.getElementById('webgl-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 4;
+
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            const particlesCount = 1200;
+            const posArray = new Float32Array(particlesCount * 3);
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 15;
+            }
+            
+            const particlesGeometry = new THREE.BufferGeometry();
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.015,
+                color: 0x02BFF0,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+
+            let mouseX = 0;
+            let mouseY = 0;
+            let targetX = 0;
+            let targetY = 0;
+            const windowHalfX = window.innerWidth / 2;
+            const windowHalfY = window.innerHeight / 2;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = (event.clientX - windowHalfX);
+                mouseY = (event.clientY - windowHalfY);
+            });
+
+            const clock = new THREE.Clock();
+            const tick = () => {
+                const elapsedTime = clock.getElapsedTime();
+
+                particlesMesh.rotation.y = elapsedTime * 0.03;
+                particlesMesh.rotation.x = elapsedTime * 0.01;
+
+                targetX = mouseX * 0.001;
+                targetY = mouseY * 0.001;
+                particlesMesh.rotation.y += 0.5 * (targetX - particlesMesh.rotation.y);
+                particlesMesh.rotation.x += 0.5 * (targetY - particlesMesh.rotation.x);
+                
+                camera.position.x += (mouseX * 0.0005 - camera.position.x) * 0.05;
+                camera.position.y += (-mouseY * 0.0005 - camera.position.y) * 0.05;
+                camera.lookAt(scene.position);
+
+                renderer.render(scene, camera);
+                window.requestAnimationFrame(tick);
+            };
+            tick();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+        initThreeJS();
+
+        /* =========================================
+           2. 磁吸按鈕效果 (Magnetic Pull)
+           ========================================= */
+        const magneticBtns = document.querySelectorAll('.magnetic-btn');
+        magneticBtns.forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                btn.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px) scale(1.05)`;
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = `translate(0px, 0px) scale(1)`;
+            });
+        });
+
+        /* =========================================
+           3. 中英雙語切換系統
+           ========================================= */
+        const translations = {
+            en: {
+                badge: 'NEXT-GENERATION IOT SECURITY',
+                titleMain1: 'Leading', titleKeyword: 'IoT', titleMain2: 'Innovation',
+                subtitle: 'Empowering the future with Smart Anti-Theft systems and Intelligent Lighting Control solutions.',
+                cta1: 'Explore Solutions', cta2: 'Contact Us',
+                sectionTitle: 'Our Core', sectionHighlight: 'Technologies',
+                card1Title: 'IoT Platforms', card1Desc: 'Comprehensive smart sensor ecosystem for real-time facility monitoring and environmental control.',
+                card1Feat1: 'Water Leak Detection', card1Feat2: 'Smart Energy Metering', card1Feat3: 'Temp & Humidity',
+                card2Title: 'Smart Anti-Theft', card2Desc: 'Advanced intrusion detection systems equipped with real-time alerts, AI behavioral analysis, and proactive monitoring to protect your premises.',
+                card3Title: 'Intelligent Lighting', card3Desc: 'Automated, energy-efficient lighting controls that intuitively adapt to environment, occupancy, and schedules, reducing power consumption effortlessly.',
+                learnMore: 'Learn More', footerDesc: 'Engineering the future of connectivity. Cyber-secure IoT platforms, advanced anti-theft systems, and intelligent environments for the modern enterprise.',
+                solutionsTitle: 'Solutions', companyTitle: 'Company',
+                footerSol1: 'IoT Platforms', footerSol2: 'Anti-Theft Security', footerSol3: 'Lighting Control',
+                navAbout: 'About Us', navSol: 'Solutions', navContact: 'Contact'
+            },
+            tw: {
+                badge: '次世代物聯網安全防護',
+                titleMain1: '引領', titleKeyword: '物聯網', titleMain2: '科技創新',
+                subtitle: '為現代企業提供領先的智能防盜系統與智能燈控解決方案，全面賦能未來。',
+                cta1: '探索解決方案', cta2: '聯絡我們',
+                sectionTitle: '核心', sectionHighlight: '科技',
+                card1Title: '物聯網平台', card1Desc: '全方位的智能傳感器生態系統，實現設施即時監控與高精度環境控制。',
+                card1Feat1: '水浸與漏水檢測', card1Feat2: '智能電表與能耗管理', card1Feat3: '溫濕度即時監控',
+                card2Title: '智能防盜系統', card2Desc: '配備即時警報、AI 行為分析與主動防禦監控的先進入侵偵測系統，全面保護您的資產安全。',
+                card3Title: '智能燈控', card3Desc: '自動化且節能的照明控制系統，能直觀地根據環境光線、人員佔用及時間排程進行調節，輕鬆降低耗電量。',
+                learnMore: '了解更多', footerDesc: '建構未來的連網技術。為現代企業打造具備網路安全的物聯網平台、先進防盜系統與智能環境。',
+                solutionsTitle: '解決方案', companyTitle: '關於公司',
+                footerSol1: '物聯網平台', footerSol2: '智能防盜安全', footerSol3: '智能燈控系統',
+                navAbout: '關於我們', navSol: '解決方案', navContact: '聯絡我們'
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'en';
+
+        function setLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', lang);
+            updateContent();
+            updateLangButtons();
+        }
+
+        function updateContent() {
+            const t = translations[currentLang];
+            document.querySelectorAll('.hero-badge').forEach(el => el.textContent = t.badge);
+            document.querySelectorAll('.hero-title-main1').forEach(el => el.textContent = t.titleMain1);
+            document.querySelectorAll('.hero-title-main2').forEach(el => el.textContent = t.titleMain2);
+            document.querySelectorAll('.hero-title-keyword').forEach(el => el.textContent = t.titleKeyword);
+            document.querySelectorAll('.hero-subtitle').forEach(el => el.textContent = t.subtitle);
+            document.querySelectorAll('.hero-cta1-text').forEach(el => el.textContent = t.cta1);
+            document.querySelectorAll('.hero-cta2').forEach(el => el.textContent = t.cta2);
+            document.querySelectorAll('.hero-section-title').forEach(el => el.textContent = t.sectionTitle);
+            document.querySelectorAll('.hero-section-highlight').forEach(el => el.textContent = t.sectionHighlight);
+            
+            document.querySelectorAll('.card1-title').forEach(el => el.textContent = t.card1Title);
+            document.querySelectorAll('.card1-desc').forEach(el => el.textContent = t.card1Desc);
+            document.querySelectorAll('.card1-feat1').forEach(el => el.textContent = t.card1Feat1);
+            document.querySelectorAll('.card1-feat2').forEach(el => el.textContent = t.card1Feat2);
+            document.querySelectorAll('.card1-feat3').forEach(el => el.textContent = t.card1Feat3);
+            
+            document.querySelectorAll('.card2-title').forEach(el => el.textContent = t.card2Title);
+            document.querySelectorAll('.card2-desc').forEach(el => el.textContent = t.card2Desc);
+            document.querySelectorAll('.card3-title').forEach(el => el.textContent = t.card3Title);
+            document.querySelectorAll('.card3-desc').forEach(el => el.textContent = t.card3Desc);
+            
+            document.querySelectorAll('.learn-more').forEach(el => el.textContent = t.learnMore);
+            
+            document.querySelectorAll('.footer-desc').forEach(el => el.textContent = t.footerDesc);
+            document.querySelectorAll('.footer-solutions-title').forEach(el => el.textContent = t.solutionsTitle);
+            document.querySelectorAll('.footer-company-title').forEach(el => el.textContent = t.companyTitle);
+            document.querySelectorAll('.footer-sol1').forEach(el => el.textContent = t.footerSol1);
+            document.querySelectorAll('.footer-sol2').forEach(el => el.textContent = t.footerSol2);
+            document.querySelectorAll('.footer-sol3').forEach(el => el.textContent = t.footerSol3);
+            document.querySelectorAll('.nav-about-link').forEach(el => el.textContent = t.navAbout);
+            document.querySelectorAll('.nav-sol-link').forEach(el => el.textContent = t.navSol);
+            document.querySelectorAll('.nav-contact-link').forEach(el => el.textContent = t.navContact);
+
+            document.querySelectorAll('.nav-link').forEach(el => {
+                el.textContent = currentLang === 'tw' ? el.dataset.tw : el.dataset.en;
+            });
+        }
+
+        function updateLangButtons() {
+            document.querySelectorAll('#lang-en, #lang-en-mobile').forEach(el => el.classList.toggle('active', currentLang === 'en'));
+            document.querySelectorAll('#lang-tw, #lang-tw-mobile').forEach(el => el.classList.toggle('active', currentLang === 'tw'));
+        }
+
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('active'));
+        document.getElementById('closeMobileMenu')?.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('active'));
+
+        updateContent();
+        updateLangButtons();
+    </script>
+</body>
+</html>

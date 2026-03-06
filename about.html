@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - EC Labs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { cyan: { DEFAULT: '#02BFF0', glow: 'rgba(2, 191, 240, 0.6)' }, darkBg: '#03050A' }, fontFamily: { sans:['Inter', 'Noto Sans TC', 'sans-serif'] } } } }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #03050A; 
+            background-image: 
+                linear-gradient(to right, rgba(2, 191, 240, 0.04) 1px, transparent 1px), 
+                linear-gradient(to bottom, rgba(2, 191, 240, 0.04) 1px, transparent 1px), 
+                radial-gradient(circle at 50% 30%, rgba(2, 191, 240, 0.15) 0%, rgba(3, 5, 10, 0.85) 60%, rgba(3, 5, 10, 1) 100%), 
+                url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2070'); /* 高級數據中心背景 */
+            background-size: 50px 50px, 50px 50px, 100% 100%, cover; 
+            background-position: center; 
+            background-attachment: fixed; 
+            color: white; overflow-x: hidden; margin: 0; 
+        }
+        .glow-text { text-shadow: 0 0 10px rgba(2, 191, 240, 0.8), 0 0 20px rgba(2, 191, 240, 0.5); }
+        .border-beam-card { position: relative; border-radius: 1.5rem; z-index: 1; overflow: hidden; transition: transform 0.4s; }
+        .border-beam-card::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent 70%, rgba(2, 191, 240, 1) 100%); animation: rotate-beam 3s linear infinite; z-index: -2; opacity: 0.5; transition: opacity 0.3s; }
+        .border-beam-card::after { content: ''; position: absolute; inset: 1px; background: linear-gradient(145deg, rgba(10, 14, 26, 0.7), rgba(3, 5, 10, 0.85)); backdrop-filter: blur(12px); border-radius: inherit; z-index: -1; }
+        .border-beam-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(2, 191, 240, 0.15); }
+        .border-beam-card:hover::before { opacity: 1; animation: rotate-beam 1.5s linear infinite; }
+        @keyframes rotate-beam { 100% { transform: rotate(360deg); } }
+        .magnetic-btn { display: inline-flex; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+        .css-cloud-logo { position: relative; width: 48px; height: 32px; display: flex; align-items: center; justify-content: center; }
+        .cloud-base { position: absolute; bottom: 4px; width: 44px; height: 20px; background: #02BFF0; border-radius: 20px; box-shadow: 0 0 10px rgba(2, 191, 240, 0.6); }
+        .cloud-puff-1 { position: absolute; bottom: 8px; left: 6px; width: 22px; height: 22px; background: #02BFF0; border-radius: 50%; box-shadow: 0 0 10px rgba(2, 191, 240, 0.6); }
+        .cloud-puff-2 { position: absolute; bottom: 8px; right: 4px; width: 28px; height: 28px; background: #02BFF0; border-radius: 50%; box-shadow: 0 0 10px rgba(2, 191, 240, 0.6); }
+        .toggle-switch { position: absolute; bottom: 8px; right: 8px; width: 20px; height: 10px; background: #ffffff; border-radius: 10px; z-index: 10; }
+        .toggle-knob { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; background: #02BFF0; border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.5); }
+        .mobile-menu { transform: translateX(-100%); transition: transform 0.3s; }
+        .mobile-menu.active { transform: translateX(0); }
+        .lang-btn { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(2, 191, 240, 0.3); }
+        .lang-btn.active { background: #02BFF0; color: #03050A; box-shadow: 0 0 15px rgba(2, 191, 240, 0.8); }
+        .lang-btn:not(.active) { background: transparent; color: #9CA3AF; }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+    <nav class="border-b border-cyan/20 bg-[#03050A]/70 backdrop-blur-xl fixed w-full z-50 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 magnetic-btn group">
+                <div class="css-cloud-logo scale-90 group-hover:scale-100 transition-transform"><div class="cloud-puff-1"></div><div class="cloud-puff-2"></div><div class="cloud-base"></div><div class="toggle-switch"><div class="toggle-knob"></div></div></div>
+                <span class="font-black text-2xl md:text-3xl text-white tracking-tighter">EC<span class="text-cyan glow-text">-</span>Labs</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="nav-link text-gray-400 hover:text-cyan px-3 py-2 text-sm font-bold transition-all" data-en="Home" data-tw="首頁">Home</a>
+                <a href="solution.html" class="nav-link text-gray-400 hover:text-cyan px-3 py-2 text-sm font-bold transition-all" data-en="Solutions" data-tw="解決方案">Solutions</a>
+                <a href="about.html" class="nav-link text-cyan px-3 py-2 text-sm font-bold border-b-2 border-cyan text-shadow-[0_0_10px_#02BFF0]" data-en="About" data-tw="關於">About</a>
+                <a href="contact.html" class="nav-link text-gray-400 hover:text-cyan px-3 py-2 text-sm font-bold transition-all" data-en="Contact" data-tw="聯絡">Contact</a>
+                <div class="flex items-center gap-2 ml-4">
+                    <button onclick="setLang('en')" class="lang-btn active" id="lang-en">EN</button>
+                    <button onclick="setLang('tw')" class="lang-btn" id="lang-tw">中</button>
+                </div>
+            </div>
+            <div class="md:hidden flex items-center gap-3">
+                <button onclick="setLang('en')" class="lang-btn active text-xs" id="lang-en-mobile">EN</button>
+                <button onclick="setLang('tw')" class="lang-btn text-xs" id="lang-tw-mobile">中</button>
+                <button id="mobileMenuBtn" class="text-cyan"><i class="fa-solid fa-bars text-2xl"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="mobileMenu" class="mobile-menu fixed inset-0 z-40 bg-darkBg/95 backdrop-blur-2xl border-l border-cyan/20">
+        <div class="flex flex-col h-full pt-24 px-8">
+            <button id="closeMobileMenu" class="absolute top-6 right-6 text-cyan text-3xl"><i class="fa-solid fa-times"></i></button>
+            <nav class="flex flex-col space-y-6">
+                <a href="index.html" class="nav-link text-2xl font-black text-white pb-4" data-en="Home" data-tw="首頁">Home</a>
+                <a href="solution.html" class="nav-link text-2xl font-black text-white pb-4" data-en="Solutions" data-tw="解決方案">Solutions</a>
+                <a href="about.html" class="nav-link text-2xl font-black text-cyan pb-4" data-en="About" data-tw="關於">About</a>
+                <a href="contact.html" class="nav-link text-2xl font-black text-white pb-4" data-en="Contact" data-tw="聯絡">Contact</a>
+            </nav>
+        </div>
+    </div>
+
+    <header class="pt-40 pb-16 text-center relative z-10 px-4">
+        <h1 class="text-5xl md:text-7xl font-black text-white mb-6 drop-shadow-2xl">Pioneering the <br class="md:hidden"/><span class="text-cyan glow-text page-title">Smart Future</span></h1>
+        <p class="page-desc text-gray-300 max-w-3xl mx-auto text-lg md:text-xl font-medium">Headquartered in Hong Kong, EC-Labs is a premier technology firm specializing in enterprise-grade IoT architecture.</p>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 pb-24 relative z-10">
+        <div class="grid md:grid-cols-2 gap-10 mb-20">
+            <div class="border-beam-card p-10">
+                <div class="relative z-10">
+                    <i class="fa-solid fa-rocket text-4xl text-cyan mb-6 drop-shadow-[0_0_10px_#02BFF0]"></i>
+                    <h2 class="mission-title text-3xl font-black text-white mb-4">Our Mission</h2>
+                    <p class="mission-desc text-gray-400 font-medium">To bridge the gap between physical infrastructure and digital intelligence.</p>
+                </div>
+            </div>
+            <div class="border-beam-card p-10">
+                <div class="relative z-10">
+                    <i class="fa-solid fa-eye text-4xl text-cyan mb-6 drop-shadow-[0_0_10px_#02BFF0]"></i>
+                    <h2 class="vision-title text-3xl font-black text-white mb-4">Our Vision</h2>
+                    <p class="vision-desc text-gray-400 font-medium">To become the global standard for seamless IoT integration.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mb-16">
+            <h2 class="why-title text-4xl font-black text-white mb-10">Why Partner With <span class="text-cyan">EC-Labs?</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="border-beam-card p-8 text-center"><div class="relative z-10"><i class="fa-solid fa-shield-halved text-4xl text-cyan mb-4"></i><h4 class="why1-title font-bold text-white mb-2">Uncompromised Security</h4><p class="why1-desc text-gray-400 text-sm">AES-256 encryption</p></div></div>
+                <div class="border-beam-card p-8 text-center"><div class="relative z-10"><i class="fa-solid fa-microchip text-4xl text-cyan mb-4"></i><h4 class="why2-title font-bold text-white mb-2">Hardware Agnostic</h4><p class="why2-desc text-gray-400 text-sm">Seamless integration</p></div></div>
+                <div class="border-beam-card p-8 text-center"><div class="relative z-10"><i class="fa-solid fa-bolt text-4xl text-cyan mb-4"></i><h4 class="why3-title font-bold text-white mb-2">Ultra-Low Latency</h4><p class="why3-desc text-gray-400 text-sm">0.5s response</p></div></div>
+                <div class="border-beam-card p-8 text-center"><div class="relative z-10"><i class="fa-solid fa-headset text-4xl text-cyan mb-4"></i><h4 class="why4-title font-bold text-white mb-2">Local Support</h4><p class="why4-desc text-gray-400 text-sm">Hong Kong team</p></div></div>
+            </div>
+        </div>
+
+        <section class="border-beam-card p-16 text-center mt-20">
+            <div class="relative z-10">
+                <h2 class="cta-title text-3xl md:text-4xl font-black text-white mb-4">Ready to Upgrade Your Infrastructure?</h2>
+                <p class="cta-desc text-gray-400 mb-8 text-lg">Connect with our engineering team for a customized IoT solution.</p>
+                <a href="contact.html" class="magnetic-btn inline-flex bg-cyan text-darkBg font-black py-4 px-10 rounded-full shadow-[0_0_30px_rgba(2,191,240,0.6)] hover:shadow-[0_0_50px_rgba(2,191,240,1)] hover:bg-white transition-colors">Contact Our Experts</a>
+            </div>
+        </section>
+    </div>
+
+    <footer class="border-t border-cyan/10 bg-[#03050A]/95 mt-auto py-8 text-center relative z-10"><p class="text-gray-600 text-xs tracking-widest font-bold">© 2026 EC-LABS. ALL RIGHTS RESERVED.</p></footer>
+
+    <script>
+        document.querySelectorAll('.magnetic-btn').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => { const rect = btn.getBoundingClientRect(); btn.style.transform = `translate(${(e.clientX - rect.left - rect.width/2)*0.3}px, ${(e.clientY - rect.top - rect.height/2)*0.3}px) scale(1.05)`; });
+            btn.addEventListener('mouseleave', () => btn.style.transform = `translate(0px, 0px) scale(1)`);
+        });
+
+        /* Translation Logic */
+        const translations = {
+            en: { pageTitle: 'Smart Future', pageDesc: 'Headquartered in Hong Kong, EC-Labs is a premier technology firm specializing in enterprise-grade IoT architecture.', missionTitle: 'Our Mission', missionDesc: 'To bridge the gap between physical infrastructure and digital intelligence.', visionTitle: 'Our Vision', visionDesc: 'To become the global standard for seamless IoT integration.', whyTitle: 'Why Partner With EC-Labs?', why1Title: 'Uncompromised Security', why1Desc: 'AES-256 encryption', why2Title: 'Hardware Agnostic', why2Desc: 'Seamless integration', why3Title: 'Ultra-Low Latency', why3Desc: '0.5s response', why4Title: 'Local Support', why4Desc: 'Hong Kong team', ctaTitle: 'Ready to Upgrade Your Infrastructure?', ctaDesc: 'Connect with our engineering team for a customized IoT solution.' },
+            tw: { pageTitle: '智能未來', pageDesc: '總部位於香港，EC-Labs 是一家領先的科技公司，專門提供企業級物聯網架構。', missionTitle: '我們的使命', missionDesc: '連接物理基礎設施與數字智能。', visionTitle: '我們的願景', visionDesc: '成為無縫物聯網整合的全球標準。', whyTitle: '為何選擇 EC-Labs？', why1Title: '無妥協的安全', why1Desc: 'AES-256 加密', why2Title: '硬件無關', why2Desc: '無縫整合', why3Title: '超低延遲', why3Desc: '0.5秒響應', why4Title: '本地支援', why4Desc: '香港團隊', ctaTitle: '準備好升級您的基礎設施了嗎？', ctaDesc: '聯繫我們的工程團隊，獲取定制的物聯網解決方案。' }
+        };
+        let currentLang = localStorage.getItem('lang') || 'en';
+        function setLang(lang) { currentLang = lang; localStorage.setItem('lang', lang); updateContent(); }
+        function updateContent() {
+            const t = translations[currentLang];
+            document.querySelectorAll('.page-title').forEach(el => el.textContent = t.pageTitle);
+            document.querySelectorAll('.page-desc').forEach(el => el.textContent = t.pageDesc);
+            document.querySelectorAll('.mission-title').forEach(el => el.textContent = t.missionTitle);
+            document.querySelectorAll('.mission-desc').forEach(el => el.textContent = t.missionDesc);
+            document.querySelectorAll('.vision-title').forEach(el => el.textContent = t.visionTitle);
+            document.querySelectorAll('.vision-desc').forEach(el => el.textContent = t.visionDesc);
+            document.querySelectorAll('.why-title').forEach(el => el.textContent = t.whyTitle);
+            document.querySelectorAll('.why1-title').forEach(el => el.textContent = t.why1Title);
+            document.querySelectorAll('.why1-desc').forEach(el => el.textContent = t.why1Desc);
+            document.querySelectorAll('.why2-title').forEach(el => el.textContent = t.why2Title);
+            document.querySelectorAll('.why2-desc').forEach(el => el.textContent = t.why2Desc);
+            document.querySelectorAll('.why3-title').forEach(el => el.textContent = t.why3Title);
+            document.querySelectorAll('.why3-desc').forEach(el => el.textContent = t.why3Desc);
+            document.querySelectorAll('.why4-title').forEach(el => el.textContent = t.why4Title);
+            document.querySelectorAll('.why4-desc').forEach(el => el.textContent = t.why4Desc);
+            document.querySelectorAll('.cta-title').forEach(el => el.textContent = t.ctaTitle);
+            document.querySelectorAll('.cta-desc').forEach(el => el.textContent = t.ctaDesc);
+            document.querySelectorAll('.nav-link').forEach(el => el.textContent = currentLang === 'tw' ? el.dataset.tw : el.dataset.en);
+            document.querySelectorAll('#lang-en, #lang-en-mobile').forEach(el => el.classList.toggle('active', currentLang === 'en'));
+            document.querySelectorAll('#lang-tw, #lang-tw-mobile').forEach(el => el.classList.toggle('active', currentLang === 'tw'));
+        }
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => document.getElementById('mobileMenu').classList.add('active'));
+        document.getElementById('closeMobileMenu')?.addEventListener('click', () => document.getElementById('mobileMenu').classList.remove('active'));
+        updateContent();
+    </script>
+</body>
+</html>
